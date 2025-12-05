@@ -17,7 +17,7 @@ tot_energy2_ifg=zeros(size(delay,2),size(accuracy,2));
 for i=1:1:size(delay,2) %delay
     for j=1:1:size(accuracy,2) %accuracy
 [compute_energy1(i,j), compute_energy2(i,j), communication_energy1(i,j), communication_energy2(i,j), tot_energy1(i,j), tot_energy2(i,j)]=weighted_fn1(delay(1,i)*10^-3,accuracy(1,j));
-[compute_energy1_ifg(i,j), compute_energy2_ifg(i,j), communication_energy1_ifg(i,j), communication_energy2_ifg(i,j), tot_energy1_ifg(i,j), tot_energy2_ifg(i,j)]=ifg(delay(1,i)*10^-3,accuracy(1,j));
+[compute_energy1_ifg(i,j), compute_energy2_ifg(i,j), communication_energy1_ifg(i,j), communication_energy2_ifg(i,j), tot_energy1_ifg(i,j), tot_energy2_ifg(i,j)]=ifg_low(delay(1,i)*10^-3,accuracy(1,j));
     end
 end
 
@@ -31,7 +31,7 @@ f1=subplot(1,2,2,ax1);
 plot(f1,delay,tot_energy11(:,9),'kX-','MarkerSize',8,'LineWidth',1.5);
 hold all
 tot_energy1_ifg
-plot(f1,delay,tot_energy1_ifg(:,14),'bs-','MarkerSize',8,'LineWidth',1.5);
+plot(f1,delay,tot_energy1_ifg(:,11),'bs-','MarkerSize',8,'LineWidth',1.5);
 xlabel('Inference time constraint (ms)')
 ylabel('Total energy (J)')
 title('(b) Accuracy constraint = 80%');
@@ -207,7 +207,7 @@ set(gca,'FontSize', 14);
 axes(f3);
 plot(f3,acc_constraint,best_communication_e+best_compute_e,'gx--','MarkerSize',8,'LineWidth',1.5);
 hold all
-legend(f3,'MCP','IFG','OSL-opt')
+legend(f3,'MCP','FIN','OSL-opt')
 axes(f4);
 plot(f4,acc_constraint,best_communication_e,'s:','MarkerSize',8,'LineWidth',1.5);
 plot(f4,acc_constraint,best_compute_e,'o--','MarkerSize',6,'LineWidth',1.5);

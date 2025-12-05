@@ -17,7 +17,7 @@ tot_energy2_ifg=zeros(size(delay,2),size(accuracy,2));
 for i=1:1:size(delay,2) %delay
     for j=1:1:size(accuracy,2) %accuracy
 [compute_energy1(i,j), compute_energy2(i,j), communication_energy1(i,j), communication_energy2(i,j), tot_energy1(i,j), tot_energy2(i,j)]=weighted_fn1(delay(1,i)*10^-3,accuracy(1,j));
-[compute_energy1_ifg(i,j), compute_energy2_ifg(i,j), communication_energy1_ifg(i,j), communication_energy2_ifg(i,j), tot_energy1_ifg(i,j), tot_energy2_ifg(i,j)]=ifg(delay(1,i)*10^-3,accuracy(1,j));
+[compute_energy1_ifg(i,j), compute_energy2_ifg(i,j), communication_energy1_ifg(i,j), communication_energy2_ifg(i,j), tot_energy1_ifg(i,j), tot_energy2_ifg(i,j)]=ifg_high(delay(1,i)*10^-3,accuracy(1,j));
     end
 end
 
@@ -33,7 +33,7 @@ hold all
 tot_energy1_ifg
 plot(f1,delay,tot_energy1_ifg(:,14),'bs-','MarkerSize',8,'LineWidth',1.5);
 xlabel('Inference time constraint (ms)')
-ylabel('Total energy (J)')
+ylabel('Inference energy consumption (J)')
 title('(b) Accuracy constraint = 80%');
 grid on
 hold all
@@ -59,8 +59,8 @@ plot(f4,accuracy,communication_energy1(12,:),'bs:','MarkerSize',8,'LineWidth',1.
 hold all;
 plot(f4,accuracy,compute_energy1(12,:),'ro--','MarkerSize',6,'LineWidth',1.5);
 hold all
-xlabel('Accuracy constraint')
-ylabel('Energy (J)')
+xlabel('Accuracy constraint (%)')
+ylabel('Inference energy consumption (J)')
 title('(a) Inference time constraint = 5 ms');
 grid on
 set(gca,'FontSize', 14);
@@ -72,8 +72,8 @@ plot(f3,accuracy,tot_energy1_ifg(12,:),'bs-','MarkerSize',8,'LineWidth',1.5)
 title(f3,'(a) Inference time constraint = 5 ms');
 grid(f3,'on')
 set(f3,'FontSize', 14);
-xlabel(f3,'Accuracy constraint')
-ylabel(f3,'Total energy (J)')
+xlabel(f3,'Accuracy constraint (%)')
+ylabel(f3,'Inference energy consumption (J)')
 
 %%%%%%%%%%%%%%%% exhaustive_code
 
@@ -127,7 +127,7 @@ plot3(tot_energy1,accuracy1,tot_delay1*10^3,'rx','MarkerSize',8,'LineWidth',1.5)
 hold all
 plot3(tot_energy2,accuracy2,tot_delay2*10^3,'k+','MarkerSize',8,'LineWidth',1.5);
 set(gca,'FontSize', 14);
-xlabel('Total Energy(J)');
+xlabel('Inference energy consumption (J)');
 ylabel('Accuracy (%)');
 zlabel('Inference time (ms)');
 legend('B-AlexNet(CIFAR10)','B-AlexNet(CIFAR100)')
@@ -207,7 +207,7 @@ set(gca,'FontSize', 14);
 axes(f3);
 plot(f3,acc_constraint,best_communication_e+best_compute_e,'gx--','MarkerSize',8,'LineWidth',1.5);
 hold all
-legend(f3,'MCP','IFG','OSL-opt')
+legend(f3,'MCP','FIN','OSL-opt')
 axes(f4);
 plot(f4,acc_constraint,best_communication_e,'s:','MarkerSize',8,'LineWidth',1.5);
 plot(f4,acc_constraint,best_compute_e,'o--','MarkerSize',6,'LineWidth',1.5);

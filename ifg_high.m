@@ -1,0 +1,148 @@
+function [compute_energy1, compute_energy2, communication_energy1, communication_energy2, tot_energy1, tot_energy2] = ifg_high(delay_constraint,accuracy_constraint)
+%WEIGHTED_FN Summary of this function goes here
+%   weighted_fn(30,40)
+gamma=20;
+lambda=1;
+ops_layer=[22.62 6.711 10.145 19.201 13.523 29.084];%mops
+feature_layer=[(27*27*256) (13*13*384) (13*13*384) (13*13*256)];
+ac1=(85.95/79.19)*[51.94 71.91 79.19];
+ac2=(60.32/79.19)*[51.94 71.91 79.19];
+w1_2=[10 0.00178 0.00022];%communication delay_weight (1/bitrate) nanosec per bit
+%w1 is delay
+%w2 is accuracy
+%delay_constraint=30;
+%accuracy_constraint=40;
+%if((100-delay_constraint)>accuracy_constraint)
+%    accuracy_constraint=1;
+%end
+p=zeros(5,2);
+
+ee=[6 140 400];%W energy_weight device es cs
+ee_ops=[8.2 38.7 44.8];
+w1_1=[11 153.4 312];%TOPS device es cs capability delay_weight computation
+w3=[30 37 12.6];%communication device es cs nJ/bit
+
+gamma=10;
+
+nodes=[1 0 0 
+    1 1 1
+    1 1 1
+    1 1 1
+    1 1 1];
+edges_=[1 1 1 0 0 0 0 0 0
+        1 1 1 0 1 1 0 0 1
+       1 1 1 0 1 1 0 0 1
+       1 1 1 0 1 1 0 0 1];
+
+vertex=zeros(5,3,gamma+1,gamma+1 );% 3 denotes the network nodes i.e. device, es, cs
+%3 denotes the dimension
+edges=zeros(4,9,gamma+1,gamma+1 );
+%for i=1:gamma
+w1__=zeros(4,1);
+%edges(1,:,:)=1; % privacy preserving condition, currently all data sources can be used
+for i=1:4
+    for j=1:3
+        for k=1:3
+%create edge between node a and b
+w1__(i,1)=(ops_layer(1,i)*10000000/(w1_1(1,j)*1000000000));
+if((((j-1)*3)+k)==2||(((j-1)*3)+k)==3||(((j-1)*3)+k)==6 && i>2)
+    w1__(i,1)=w1__(i,1)+(feature_layer(1,i)*8*w3(1,3)/1000000000)+(feature_layer(1,i)*8*w3(1,3)/1000000000);%*6000;
+end
+w2=ac1(1,3);
+if(edges_(i,((j-1)*3)+k)==1)
+    i_d=uint16(min((gamma+1),(i+ceil(gamma*(w1__(i,1)/delay_constraint)))));
+    j_d=uint16(min((gamma+1),(j+ceil(gamma*(w2/accuracy_constraint)))));
+    edges(i,((j-1)*3)+k,i_d,j_d)=1;
+end
+        end
+end
+end
+
+%vertex
+%edges
+lambda=1;
+p(1,1)=1;
+p(1,2)=3;
+for i=2:4
+for k=lambda:gamma+1
+for l=lambda:gamma+1
+     if (edges(i,1,k,l)==1)
+        p(i,1)=1;
+     end
+            if (edges(i,2,k,l)==1 || edges(i,5,k,l)==1)
+        p(i,1)=2;
+            end
+                    if ( edges(i,5,k,l)==1)
+        p(i,1)=2;
+       end
+      if (edges(i,3,k,l)==1 || edges(i,6,k,l)==1 || edges(i,9,k,l)==1)
+        p(i,1)=3;
+      end
+
+    p(:,2)=3;
+end
+end
+end
+flag2=0;
+if(ac1(1,2)>accuracy_constraint)
+p(:,2)=2;
+flag2=1;
+p(4:5,1)=0;
+end
+accuracy_constraint;
+if(ac1(1,1)>accuracy_constraint)
+p(:,2)=1;
+p(2:5,1)=0;
+end
+sum(w1__)
+delay_constraint
+if(delay_constraint>3*sum(w1__))%% further improve this
+%    p(3,1)=p(2,l);
+if(p(5,1)~=0)
+     p(5,1)=p(4,1);
+ end 
+if(p(4,1)~=0)
+     p(4,1)=p(3,1);
+ end 
+p(3,1)=p(2,1);
+p(2,1)=p(1,1);
+end
+
+
+compute_energy=0;
+communication_energy=0;
+compute_delay=0;
+communication_delay=0;
+accuracy1=0;
+accuracy2=0;
+p;
+%for k=1:size(config,3)
+    ct=p;%config(:,:,k);
+    k=1;
+    for i=1:5
+     if(ct(i,1)~=0)
+        compute_energy(1,k)=compute_energy(1,k)+(ee(1,ct(i,1))*ops_layer(1,i)/(w1_1(1,ct(i,1))*1000));    
+        compute_delay(1,k)=compute_delay(1,k)+(ops_layer(1,i)/(w1_1(1,ct(i,1))*1000));
+        if(i>1 && ct(i,1)>ct(i-1,1))
+        communication_energy(1,k)=communication_energy(1,k)+(feature_layer(1,i-1)*8*w3(1,ct(i-1,1))/1000000000)+(feature_layer(1,i-1)*8*w3(1,ct(i-1,1))/1000000000);
+        communication_delay(1,k)=communication_delay(1,k)+(feature_layer(1,i-1)*8*w1_2(1,ct(i,1))/1000000000);
+        end
+     end
+    end
+    accuracy1(1,k)=ac1(1,ct(1,2));
+   accuracy2(1,k)=ac2(1,ct(1,2)); 
+%end
+
+
+compute_energy1=compute_energy;%.*6000;
+compute_energy2=compute_energy;%.*600;
+communication_energy1=communication_energy;%.*6000;
+communication_energy2=communication_energy;%.*600;
+tot_energy1=compute_energy1+communication_energy1;
+tot_energy2=compute_energy2+communication_energy2;
+tot_delay1=(compute_delay+communication_delay);%*6000;
+tot_delay2=(compute_delay+communication_delay);%*600;
+
+
+end
+

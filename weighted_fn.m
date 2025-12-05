@@ -1,4 +1,4 @@
-function [compute_energy1, compute_energy2, communication_energy1, communication_energy2, tot_energy1, tot_energy2] = weighted_fn1(delay_constraint,accuracy_constraint)
+function [compute_energy1, compute_energy2, communication_energy1, communication_energy2, tot_energy1, tot_energy2] = weighted_fn(delay_constraint,accuracy_constraint)
 %WEIGHTED_FN Summary of this function goes here
 %   weighted_fn(30,40)
 
@@ -11,17 +11,17 @@ w1_2=[10 0.00178 0.00022];%communication delay_weight (1/bitrate) nanosec per bi
 %w2 is accuracy
 %delay_constraint=30;
 %accuracy_constraint=40;
-%if((100-delay_constraint)>accuracy_constraint)
-%    accuracy_constraint=1;
-%end
+if((100-delay_constraint)>accuracy_constraint)
+    accuracy_constraint=1;
+end
 p=zeros(5,2);
 for i=1:5 %layer_num
     if (i==1)%% layer 1 constraint
-        w1(i,1)=(ops_layer(1,1)*10000000/11000000000);%*6000;
-        w1(i,2)=(ops_layer(1,1)*10000000/11000000000);%*600;
+        w1(i,1)=(ops_layer(1,1)*10000000/11000000000)*6000;
+        w1(i,2)=(ops_layer(1,1)*10000000/11000000000)*600;
         w2(i,1)=ac1(1,1);
         w2(i,2)=ac2(1,1);
-        we_1(i)=max(0.5*w1(i,1)/delay_constraint,accuracy_constraint/w2(i,1));
+        we_1(i)=max(w1(i,1)/delay_constraint,accuracy_constraint/w2(i,1));
         p(1,1)=1;
         p(1,2)=1;
     else
@@ -38,46 +38,44 @@ for i=1:5 %layer_num
             w2(i,1)=ac1(1,i-1);
             w2(i,2)=ac2(1,i-1);
         end
-        w1(i,1)=min([val_d,val_es,val_cs]);%*6000;
-        w1(i,2)=min([val_d,val_es,val_cs]);%*600;
-        we_1(i)=max(0.5*sum(w1(1:i,1))/delay_constraint,accuracy_constraint/w2(i,1));        
-        if(val_d<val_es && (we_1(i)>0.85 || p((i-1),2)>=i) && p((i-1),1)==1)
+        w1(i,1)=min([val_d,val_es,val_cs])*6000;
+        w1(i,2)=min([val_d,val_es,val_cs])*600;
+        we_1(i)=max(w1(i,1)/delay_constraint,accuracy_constraint/w2(i,1));        
+        if(val_d<val_es && (we_1(i)>0.5 || p((i-1),2)>=i) && p((i-1),1)==1)
             p(i,1)=1;     
             if(i<4)
                 p(:,2)=min(i,2);
             else
                 p(:,2)=min(i,3);
             end
-            w1(i,1)=val_d;%*6000;
-            w1(i,2)=val_d;%*600;
-        elseif(val_d>val_es && (we_1(i)>0.85|| p((i-1),2)>=i) && p((i-1),1)==1)
+            w1(i,1)=val_d*6000;
+            w1(i,2)=val_d*600;
+        elseif(val_d>val_es && (we_1(i)>0.5 || p((i-1),2)>=i) && p((i-1),1)==1)
             p(i,1)=2;     
             if(i<4)
                 p(:,2)=min(i,2);
             else
                 p(:,2)=min(i,3);
             end
-            w1(i,1)=val_es;%*6000;
-            w1(i,2)=val_es;%*600;
-        elseif(val_es>val_cs && (we_1(i)>0.85 || p((i-1),2)>=i) && p((i-1),1)>=1)
+            w1(i,1)=val_es*6000;
+            w1(i,2)=val_es*600;
+        elseif(val_es>val_cs && (we_1(i)>0.5 || p((i-1),2)>=i) && p((i-1),1)>=1)
             p(i,1)=3;     
             if(i<4)
                 p(:,2)=min(i,2);
             else
                 p(:,2)=min(i,3);
             end
-            w1(i,1)=val_cs;%*6000;
-            w1(i,2)=val_cs;%*600;   
+            w1(i,1)=val_cs*6000;
+            w1(i,2)=val_cs*600;   
         end        
-        we_1(i)=max(sum(0.5*w1(1:i,1))/delay_constraint,accuracy_constraint/w2(i,1));        
+        we_1(i)=max(w1(i,1)/delay_constraint,accuracy_constraint/w2(i,1));        
     end
 end
-we_1;
-w1./delay_constraint;
-accuracy_constraint./w2;
-%if(delay_constraint==25 && accuracy_constraint==80)
-%p;
-%end
+we_1
+w1./delay_constraint
+accuracy_constraint./w2
+p
 
 ee=[6 140 400];%W energy_weight device es cs
 ee_ops=[8.2 38.7 44.8];
@@ -109,14 +107,15 @@ accuracy2=0;
 %end
 
 
-compute_energy1=compute_energy;%.*6000;
-compute_energy2=compute_energy;%.*600;
-communication_energy1=communication_energy;%.*6000;
-communication_energy2=communication_energy;%.*600;
-tot_energy1=compute_energy1+communication_energy1;
-tot_energy2=compute_energy2+communication_energy2;
-tot_delay1=(compute_delay+communication_delay);%*6000;
-tot_delay2=(compute_delay+communication_delay);%*600;
+compute_energy1=compute_energy.*6000
+compute_energy2=compute_energy.*600
+communication_energy1=communication_energy.*6000
+communication_energy2=communication_energy.*600
+tot_energy1=compute_energy1+communication_energy1
+tot_energy2=compute_energy2+communication_energy2
+tot_delay1=(compute_delay+communication_delay)*6000
+tot_delay2=(compute_delay+communication_delay)*600
+
 
 
 end
